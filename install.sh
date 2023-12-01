@@ -10,3 +10,5 @@ echo
 echo -e "\033[1m${SERVICE_PATH}e:\033[0m"
 echo 
 cat "$SERVICE_PATH"
+
+systemctl --user daemon-reload
