@@ -1,0 +1,14 @@
+[Unit]
+Description=Share Windows ssh-agent to WSL2 using SSH agent forwarding
+After=network-online.target
+
+[Service]
+Type=idle
+Environment=SSHD_PORT=34672
+ExecStart=<exec>
+RestartSec=3
+TimeoutStopSec=1
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
