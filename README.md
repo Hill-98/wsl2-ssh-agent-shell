@@ -18,4 +18,4 @@ Share Windows ssh-agent to WSL2 using SSH agent forwarding
 
 ## Known issues
 
-* WSL auto-shutdown will not work because the SSH session is considered an active terminal by it.
+* WSL auto-shutdown will not work because the SSH session is considered an active terminal.
