@@ -15,3 +15,7 @@ Share Windows ssh-agent to WSL2 using SSH agent forwarding
 4. Add this line to your `.bashrc` or `.zshrc`: `export SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/wsl2-ssh-agent-shell.sock`
 
 5. Done. Reopen the WSL Shell and enjoy!
+
+## Known issues
+
+* WSL auto-shutdown will not work because the SSH session is considered an active terminal by it.
