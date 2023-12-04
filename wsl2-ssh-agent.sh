@@ -22,9 +22,18 @@ SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/wsl2-ssh-agent-shell.sock"
 _exit() {
     # shellcheck disable=SC2046
     kill $(jobs -pr)
+    exit 0
 }
 
 trap _exit SIGINT SIGTERM EXIT
+
+if [[ -f "$DRIVER_C/Windows/System32/OpenSSH/ssh.exe" ]]; then
+    SSH="$DRIVER_C/Windows/System32/OpenSSH/ssh.exe"
+fi
+
+if [[ -f "$DRIVER_C/Program Files/OpenSSH/ssh.exe" ]]; then
+    SSH="$DRIVER_C/Program Files/OpenSSH/ssh.exe"
+fi
 
 if [[ ! -d $DATA_DIR ]]; then
     mkdir -p "$DATA_DIR"
@@ -32,8 +41,11 @@ if [[ ! -d $DATA_DIR ]]; then
 fi
 cd "$DATA_DIR" || exit 1
 
-if [[ ! -f key ]]; then
+if [[ ! -f host_key ]]; then
     ssh-keygen -f host_key -N "" -q
+fi
+
+if [[ ! -f key ]]; then
     ssh-keygen -f key -N "" -q
 fi
 
@@ -47,12 +59,14 @@ AllowUsers $USER
 AuthorizedKeysFile "$DATA_DIR/key.pub"
 HostKey "$DATA_DIR/host_key"
 PasswordAuthentication no
-PidFile "$XDG_RUNTIME_DIR/wsl2-ssh-agent-shell.pid"
+PidFile "${XDG_RUNTIME_DIR:-$DATA_DIR}/wsl2-ssh-agent-shell.pid"
 EOF
 
-$(which sshd) -4 -D -f sshd.conf -p "$SSHD_PORT" &
+"$(which sshd)" -4 -D -f sshd.conf -p "$SSHD_PORT" &
 
-rm "$KNOWN_HOSTS_FILE_WSL"
+rm -f "$KNOWN_HOSTS_FILE_WSL"
 
-# shellcheck disable=SC2016
-$SSH -i "$SSH_KEY_FILE" -l "$USER" -o ForwardAgent=yes -o StrictHostKeyChecking=no -o "UserKnownHostsFile=$KNOWN_HOSTS_FILE" -T 127.0.0.1 -p "$SSHD_PORT" "ln -sf \"\$SSH_AUTH_SOCK\" '$SSH_AUTH_SOCK'; while true; do sleep 60; done"
+"$SSH" -A -i "$SSH_KEY_FILE" -l "$USER" \
+    -o StrictHostKeyChecking=no -o "UserKnownHostsFile=$KNOWN_HOSTS_FILE" \
+    -p "$SSHD_PORT" -t 127.0.0.1 \
+    "ln -sf \"\$SSH_AUTH_SOCK\" '$SSH_AUTH_SOCK'; sleep 60; while [[ \$(ps -d | grep Relay | wc -l) -gt 1 ]];do sleep 600; done; rm -f '$SSH_AUTH_SOCK'; exit 0"
