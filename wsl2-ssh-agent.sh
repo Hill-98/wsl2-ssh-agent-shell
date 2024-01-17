@@ -1,23 +1,13 @@
 #!/bin/bash
 
-. /etc/os-release
-
 SSHD_PORT=${SSHD_PORT:-34672}
+ROOT_DIR=$(dirname "$(readlink -f "$0")")
 
-DATA_DIR=${XDG_DATA_HOME:-$HOME/.local/share}/wsl2-ssh-agent-shell
+cd "$ROOT_DIR" || exit 1
 
-# shellcheck disable=SC1003
-DRIVER_C=$(printf "%s" "$(grep 'C:\\' /proc/mounts | cut -d " " -f 2)")
-PowerShell="$DRIVER_C/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
-SSH="$DRIVER_C/Windows/System32/OpenSSH/ssh.exe"
+. common.sh
 
-USERPROFILE=$($PowerShell -NoLogo -NoProfile -NonInteractive -Command '[System.Environment]::GetEnvironmentVariable("USERPROFILE")' | sed $'s/\r//')
-KNOWN_HOSTS_FILE="$USERPROFILE\\AppData\\Local\\KnownHosts.$ID.wsl2-ssh-agent-shell"
-KNOWN_HOSTS_FILE_WSL="$(wslpath -u "$KNOWN_HOSTS_FILE")"
-SSH_KEY_FILE="$USERPROFILE\\.ssh\\wsl2-ssh-agent-shell.$ID.key"
-SSH_KEY_FILE_WSL="$(wslpath -u "$SSH_KEY_FILE")"
-
-SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/wsl2-ssh-agent-shell.sock"
+SSH="ssh.exe"
 
 _exit() {
     # shellcheck disable=SC2046
@@ -62,11 +52,11 @@ PasswordAuthentication no
 PidFile "${XDG_RUNTIME_DIR:-$DATA_DIR}/wsl2-ssh-agent-shell.pid"
 EOF
 
-"$(which sshd)" -4 -D -f sshd.conf -p "$SSHD_PORT" &
+"$(command -v sshd)" -4 -D -f sshd.conf -p "$SSHD_PORT" &
 
-rm -f "$KNOWN_HOSTS_FILE_WSL"
+rm "$KNOWN_HOSTS_FILE_WSL"
 
 "$SSH" -A -i "$SSH_KEY_FILE" -l "$USER" \
     -o StrictHostKeyChecking=no -o "UserKnownHostsFile=$KNOWN_HOSTS_FILE" \
     -p "$SSHD_PORT" -t 127.0.0.1 \
-    "ln -sf \"\$SSH_AUTH_SOCK\" '$SSH_AUTH_SOCK'; sleep 60; while [[ \$(ps -d | grep Relay | wc -l) -gt 1 ]];do sleep 600; done; rm -f '$SSH_AUTH_SOCK'; exit 0"
+    "$ROOT_DIR/loop.sh '$XDG_RUNTIME_DIR/wsl2-ssh-agent-shell.sock'"

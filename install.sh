@@ -1,8 +1,10 @@
 #!/bin/bash
 
-cd "$(dirname "$0")" || exit 1
+ROOT_DIR=$(dirname "$(readlink -f "$0")")
 
-SERVICE_PATH=$HOME/.config/systemd/user/wsl2-ssh-agent-shell.service
+cd "$ROOT_DIR" || exit 1
+
+. common.sh
 
 sed "s|<exec>|$PWD/wsl2-ssh-agent.sh|" wsl2-ssh-agent.service.in | install -D -m 644 -v /dev/stdin "$SERVICE_PATH"
 
