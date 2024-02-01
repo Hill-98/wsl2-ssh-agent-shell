@@ -1,6 +1,7 @@
 #!/bin/bash
 
 SSHD_PORT=${SSHD_PORT:-34672}
+RELAY_MIN_COUNT=${RELAY_MIN_COUNT:-0}
 ROOT_DIR=$(dirname "$(readlink -f "$0")")
 
 cd "$ROOT_DIR" || exit 1
@@ -59,4 +60,4 @@ rm "$KNOWN_HOSTS_FILE_WSL"
 "$SSH" -A -i "$SSH_KEY_FILE" -l "$USER" \
     -o StrictHostKeyChecking=no -o "UserKnownHostsFile=$KNOWN_HOSTS_FILE" \
     -p "$SSHD_PORT" -t 127.0.0.1 \
-    "$ROOT_DIR/loop.sh '$XDG_RUNTIME_DIR/wsl2-ssh-agent-shell.sock'"
+    "$ROOT_DIR/loop.sh '$XDG_RUNTIME_DIR/wsl2-ssh-agent-shell.sock' '$RELAY_MIN_COUNT'"

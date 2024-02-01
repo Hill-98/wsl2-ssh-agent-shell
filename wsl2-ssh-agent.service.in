@@ -4,7 +4,7 @@ After=network-online.target
 
 [Service]
 Type=idle
-Environment=SSHD_PORT=34672
+Environment=RELAY_MIN_COUNT=0 SSHD_PORT=34672
 ExecStart=<exec>
 RestartSec=3
 TimeoutStopSec=1
