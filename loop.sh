@@ -1,3 +1,4 @@
+#!/bin/bash
 __SSH_AUTH_SOCK__=$1
 __RELAY_MIN_COUNT__=$2
 
